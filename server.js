@@ -31,7 +31,11 @@ io.on('connection', (socket) => {
         console.log("Admin clicked at X: " + data.x + ", Y: " + data.y);
         io.emit('remote-click', data.x, data.y);
     });
-
+// সোয়াইপ বা স্ক্রল কমান্ড আসলে তা ইউজারের অ্যাপে পাঠানো
+    socket.on('admin-remote-swipe', (data) => {
+        console.log("Admin swiped. StartX: " + data.startX + " EndX: " + data.endX);
+        io.emit('remote-swipe', data.startX, data.startY, data.endX, data.endY);
+    });
     // ৩. 🔒 এডমিন প্যানেল থেকে স্ক্রিন লক বা আনলক কমান্ড পাঠানো
     socket.on('admin-lock-touch', (shouldLock) => {
         console.log("Screen lock status: " + shouldLock);
